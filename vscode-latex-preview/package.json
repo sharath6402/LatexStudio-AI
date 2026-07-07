@@ -1,0 +1,63 @@
+{
+  "name": "latex-ai-preview",
+  "displayName": "LaTeX AI Preview",
+  "description": "Compile and preview LaTeX documents using the LaTeX Editor AI backend",
+  "version": "0.1.0",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onLanguage:latex"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "latex",
+        "extensions": [".tex"],
+        "aliases": ["LaTeX"]
+      }
+    ],
+    "commands": [
+      {
+        "command": "latexAiPreview.compileAndPreview",
+        "title": "LaTeX AI: Compile and Preview",
+        "icon": "$(open-preview)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "latexAiPreview.compileAndPreview",
+        "key": "ctrl+shift+o",
+        "when": "editorLangId == latex"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "latexAiPreview.compileAndPreview",
+          "when": "editorLangId == latex",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "LaTeX AI Preview",
+      "properties": {
+        "latexAiPreview.backendUrl": {
+          "type": "string",
+          "default": "http://127.0.0.1:8000",
+          "description": "Base URL of the LatexEditorBackend service (LatexEditorBackend.py)."
+        }
+      }
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "pdfjs-dist": "^3.11.174"
+  }
+}

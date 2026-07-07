@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Your Projects — TeXStudio AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0d0d0f; --panel:#111114; --border:#1e1e26; --accent:#c8ff57;
+    --text:#e8e8f0; --muted:#52525e; --item-hover:rgba(255,255,255,.04);
+  }
+  html,body{height:100%;font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);}
+
+  .header{
+    display:flex; align-items:center; justify-content:space-between;
+    height:56px; padding:0 28px; border-bottom:1px solid var(--border);
+  }
+  .logo{font-size:18px;font-weight:800;}
+  .logo span{color:var(--accent);}
+  .user-area{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--muted);}
+  .btn{
+    font-family:'Syne',sans-serif; font-size:11px; font-weight:700; padding:7px 14px;
+    border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--muted);
+    cursor:pointer; letter-spacing:.4px;
+  }
+  .btn:hover{border-color:var(--accent); color:var(--accent);}
+  .btn.primary{background:var(--accent); color:#000; border-color:var(--accent); font-weight:800;}
+  .btn.primary:hover{filter:brightness(1.1); color:#000;}
+
+  main{max-width:1040px; margin:0 auto; padding:40px 28px;}
+  .page-title{font-size:24px; font-weight:800; margin-bottom:4px;}
+  .page-subtitle{color:var(--muted); font-size:13px; margin-bottom:28px;}
+
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px;
+  }
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px;
+    padding:18px; cursor:pointer; transition:border-color .15s, transform .1s; position:relative;
+  }
+  .card:hover{border-color:var(--accent); transform:translateY(-2px);}
+  .card-icon{font-size:22px; margin-bottom:10px;}
+  .card-name{font-weight:700; font-size:14px; margin-bottom:4px; word-break:break-word;}
+  .card-meta{font-size:11px; color:var(--muted); font-family:'JetBrains Mono',monospace;}
+  .card-delete{
+    position:absolute; top:10px; right:10px; width:22px; height:22px; border-radius:5px;
+    border:none; background:transparent; color:var(--muted); font-size:13px; cursor:pointer; display:none;
+  }
+  .card:hover .card-delete{display:block;}
+  .card-delete:hover{background:rgba(255,107,107,.15); color:#ff6b6b;}
+
+  .card.new{
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border-style:dashed; color:var(--muted); gap:6px;
+  }
+  .card.new:hover{color:var(--accent);}
+  .card.new .plus{font-size:26px;}
+
+  .empty-state{color:var(--muted); font-size:13px; text-align:center; padding:60px 0; display:none;}
+
+  /* ── Modal ─────────────────────────────────────── */
+  .overlay{
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.6);
+    align-items:center; justify-content:center; z-index:1000;
+  }
+  .modal{
+    width:480px; background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:26px; box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .modal h3{font-size:16px; margin-bottom:18px;}
+  .field{margin-bottom:16px;}
+  label{display:block; font-size:11px; color:var(--muted); margin-bottom:6px; letter-spacing:.4px; text-transform:uppercase;}
+  input[type=text]{
+    width:100%; padding:10px 12px; background:#1a1a24; border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:13px; outline:none;
+  }
+  input[type=text]:focus{border-color:var(--accent);}
+
+  .template-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .tpl-card{
+    border:1px solid var(--border); border-radius:8px; padding:12px; cursor:pointer; font-size:12px;
+  }
+  .tpl-card.active{border-color:var(--accent); background:rgba(200,255,87,.06);}
+  .tpl-card .tpl-icon{font-size:18px; margin-bottom:6px;}
+  .tpl-card .tpl-name{font-weight:700; margin-bottom:2px;}
+  .tpl-card .tpl-desc{color:var(--muted); font-size:10px;}
+
+  .modal-actions{display:flex; justify-content:flex-end; gap:10px; margin-top:22px;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">TeX<span>Studio</span> AI</div>
+  <div class="user-area">
+    <span id="user-email">…</span>
+    <button class="btn" onclick="handleSignOut()">Sign out</button>
+  </div>
+</div>
+
+<main>
+  <div class="page-title">Your Projects</div>
+  <div class="page-subtitle">Pick up where you left off, or start something new.</div>
+
+  <div class="grid" id="project-grid">
+    <div class="card new" onclick="openModal()">
+      <div class="plus">+</div>
+      <div>New Project</div>
+    </div>
+  </div>
+  <div class="empty-state" id="empty-state">No projects yet — create your first one above.</div>
+</main>
+
+<!-- ── Create Project Modal ──────────────────────── -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <h3 id="modal-title">Create Project</h3>
+
+    <div id="step-name">
+      <div class="field">
+        <label>Project name</label>
+        <input type="text" id="project-name" placeholder="e.g. Thesis, Resume, Lecture Notes" autofocus>
+      </div>
+      <div class="modal-actions">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn primary" onclick="goToTemplateStep()">Next</button>
+      </div>
+    </div>
+
+    <div id="step-template" style="display:none;">
+      <div class="template-grid" id="template-grid"></div>
+      <div class="modal-actions">
+        <button class="btn" onclick="backToNameStep()">Back</button>
+        <button class="btn primary" id="create-btn" onclick="createProject()">Create Project</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import {
+  auth, db, onAuthStateChanged, signOut,
+  collection, query, where, orderBy, addDoc, doc, setDoc, deleteDoc, serverTimestamp, getDocs
+} from "/firebase-init.js";
+
+const TEMPLATES = {
+  blank: {
+    name: "Blank",
+    icon: "📄",
+    desc: "Start from an empty document",
+    content: `\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\n\\begin{document}\n\n\\end{document}\n`
+  },
+  article: {
+    name: "Article",
+    icon: "📰",
+    desc: "Title, author, sections",
+    content: `\\documentclass{article}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amsmath}\n\\usepackage{graphicx}\n\n\\title{Your Title Here}\n\\author{Your Name}\n\\date{\\today}\n\n\\begin{document}\n\\maketitle\n\n\\section{Introduction}\nStart writing here.\n\n\\section{Conclusion}\n\n\\end{document}\n`
+  },
+  report: {
+    name: "Report",
+    icon: "📑",
+    desc: "Chapters, table of contents",
+    content: `\\documentclass{report}\n\\usepackage[utf8]{inputenc}\n\\usepackage{amsmath}\n\\usepackage{graphicx}\n\n\\title{Report Title}\n\\author{Your Name}\n\\date{\\today}\n\n\\begin{document}\n\\maketitle\n\\tableofcontents\n\n\\chapter{Introduction}\nStart writing here.\n\n\\end{document}\n`
+  },
+  letter: {
+    name: "Letter",
+    icon: "✉️",
+    desc: "Formal letter layout",
+    content: `\\documentclass{letter}\n\\usepackage[utf8]{inputenc}\n\n\\signature{Your Name}\n\\address{Your Address \\\\ City, ZIP}\n\n\\begin{document}\n\\begin{letter}{Recipient Name \\\\ Recipient Address}\n\\opening{Dear Sir or Madam,}\n\nLetter body goes here.\n\n\\closing{Sincerely,}\n\\end{letter}\n\\end{document}\n`
+  }
+};
+let selectedTemplate = "blank";
+
+let currentUser = null;
+
+onAuthStateChanged(auth, (user) => {
+  if (!user) {
+    window.location.href = "/login";
+    return;
+  }
+  currentUser = user;
+  document.getElementById('user-email').textContent = user.displayName || user.email;
+  loadProjects();
+});
+
+window.handleSignOut = async function () {
+  await signOut(auth);
+  window.location.href = "/login";
+};
+
+async function loadProjects() {
+  const grid = document.getElementById('project-grid');
+  const emptyState = document.getElementById('empty-state');
+
+  const q = query(
+    collection(db, "projects"),
+    where("ownerId", "==", currentUser.uid)
+  );
+  const snap = await getDocs(q);
+
+  // Clear existing project cards (keep the "+ New" card)
+  grid.querySelectorAll('.card:not(.new)').forEach(el => el.remove());
+
+  if (snap.empty) {
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  const docs = snap.docs.sort((a, b) => {
+    const at = a.data().createdAt?.toMillis?.() || 0;
+    const bt = b.data().createdAt?.toMillis?.() || 0;
+    return bt - at;
+  });
+
+  docs.forEach(d => {
+    const data = d.data();
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.onclick = () => window.location.href = `/editor?id=${d.id}`;
+    const created = data.createdAt?.toDate?.();
+    card.innerHTML = `
+      <button class="card-delete" title="Delete project" onclick="event.stopPropagation(); deleteProject('${d.id}', '${(data.name || '').replace(/'/g, "\\'")}')">🗑</button>
+      <div class="card-icon">${TEMPLATES[data.template]?.icon || '📄'}</div>
+      <div class="card-name">${escapeHtml(data.name || 'Untitled')}</div>
+      <div class="card-meta">${created ? created.toLocaleDateString() : ''}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+window.deleteProject = async function (id, name) {
+  if (!confirm(`Delete project "${name}"? This cannot be undone.`)) return;
+  await deleteDoc(doc(db, "projects", id));
+  loadProjects();
+};
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+// ── Create Project Modal ──────────────────────────────
+window.openModal = function () {
+  document.getElementById('overlay').style.display = 'flex';
+  document.getElementById('project-name').value = '';
+  document.getElementById('step-name').style.display = 'block';
+  document.getElementById('step-template').style.display = 'none';
+  setTimeout(() => document.getElementById('project-name').focus(), 50);
+};
+window.closeModal = function () {
+  document.getElementById('overlay').style.display = 'none';
+};
+window.goToTemplateStep = function () {
+  const name = document.getElementById('project-name').value.trim();
+  if (!name) { alert('Please enter a project name.'); return; }
+  document.getElementById('step-name').style.display = 'none';
+  document.getElementById('step-template').style.display = 'block';
+  renderTemplateGrid();
+};
+window.backToNameStep = function () {
+  document.getElementById('step-template').style.display = 'none';
+  document.getElementById('step-name').style.display = 'block';
+};
+
+function renderTemplateGrid() {
+  const grid = document.getElementById('template-grid');
+  grid.innerHTML = '';
+  Object.entries(TEMPLATES).forEach(([key, tpl]) => {
+    const card = document.createElement('div');
+    card.className = 'tpl-card' + (key === selectedTemplate ? ' active' : '');
+    card.onclick = () => {
+      selectedTemplate = key;
+      renderTemplateGrid();
+    };
+    card.innerHTML = `
+      <div class="tpl-icon">${tpl.icon}</div>
+      <div class="tpl-name">${tpl.name}</div>
+      <div class="tpl-desc">${tpl.desc}</div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+window.createProject = async function () {
+  const name = document.getElementById('project-name').value.trim();
+  if (!name) return;
+  const btn = document.getElementById('create-btn');
+  btn.disabled = true;
+  btn.textContent = 'Creating…';
+
+  try {
+    const projectRef = await addDoc(collection(db, "projects"), {
+      name,
+      ownerId: currentUser.uid,
+      template: selectedTemplate,
+      createdAt: serverTimestamp()
+    });
+
+    await setDoc(doc(db, "projects", projectRef.id, "files", "main.tex"), {
+      path: "main.tex",
+      name: "main.tex",
+      type: "file",
+      content: TEMPLATES[selectedTemplate].content
+    });
+
+    window.location.href = `/editor?id=${projectRef.id}`;
+  } catch (err) {
+    alert('Could not create project: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'Create Project';
+  }
+};
+</script>
+</body>
+</html>

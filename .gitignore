@@ -1,0 +1,41 @@
+# Personal/private content — not for public repo
+projectFolder/
+.claude/
+
+# Superseded prototype notebooks (contained a real ngrok token; the
+# canonical backend logic now lives in LatexEditorBackEnd/LatexEditorBackend.py)
+*.ipynb
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+node_modules/
+
+# ngrok binary (downloaded locally, not committed)
+LatexEditorBackEnd/.ngrok/
+
+# Ad-hoc server/run logs
+*.log
+
+# LaTeX build artifacts
+*.aux
+*.toc
+*.lof
+*.lot
+*.out
+*.bbl
+*.blg
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
+# Test/scratch PDFs produced while developing the backend
+LatexEditorBackEnd/out.pdf
+LatexEditorBackEnd/out_image.pdf
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db

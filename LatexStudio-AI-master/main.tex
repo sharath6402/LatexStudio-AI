@@ -1,0 +1,49 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{graphicx}
+
+\title{A Sample Document}
+\author{Your Name}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This is a sample LaTeX document for testing the TeXStudio AI editor and its
+compile pipeline.
+\end{abstract}
+
+\section{Introduction}
+Welcome to \textbf{TeXStudio AI}. This document exercises sectioning, math, a
+table, and a citation~\cite{knuth1984}.
+
+\section{Mathematics}
+The quadratic formula is
+\begin{equation}
+    x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}.
+\end{equation}
+
+\section{A Table}
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|r|}
+\hline
+Item & Quantity & Price \\
+\hline
+Apples  & 3 & \$1.50 \\
+Oranges & 5 & \$2.25 \\
+\hline
+\end{tabular}
+\caption{A simple example table.}
+\label{tab:example}
+\end{table}
+
+\section{Conclusion}
+See Table~\ref{tab:example} for details.
+
+\bibliographystyle{plain}
+\bibliography{ref}
+
+\end{document}

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign In — TeXStudio AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  :root{
+    --bg:#0d0d0f; --panel:#111114; --border:#1e1e26; --accent:#c8ff57;
+    --text:#e8e8f0; --muted:#52525e; --danger:#ff6b6b;
+  }
+  html,body{height:100%;font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);}
+  body{display:flex;align-items:center;justify-content:center;}
+  .card{
+    width:360px; background:var(--panel); border:1px solid var(--border);
+    border-radius:14px; padding:32px; box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .logo{font-size:20px;font-weight:800;text-align:center;margin-bottom:4px;}
+  .logo span{color:var(--accent);}
+  .subtitle{text-align:center;color:var(--muted);font-size:12px;margin-bottom:24px;}
+  .field{margin-bottom:14px;}
+  label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;letter-spacing:.4px;text-transform:uppercase;}
+  input{
+    width:100%; padding:10px 12px; background:#1a1a24; border:1px solid var(--border);
+    border-radius:8px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:13px; outline:none;
+  }
+  input:focus{border-color:var(--accent);}
+  .btn{
+    width:100%; padding:11px; border-radius:8px; border:1px solid var(--accent);
+    background:var(--accent); color:#000; font-family:'Syne',sans-serif; font-weight:800;
+    font-size:13px; cursor:pointer; margin-top:6px; transition:filter .15s;
+  }
+  .btn:hover{filter:brightness(1.1);}
+  .btn:disabled{opacity:.6;cursor:default;}
+  .toggle{
+    text-align:center; margin-top:18px; font-size:12px; color:var(--muted);
+  }
+  .toggle a{color:var(--accent); cursor:pointer; text-decoration:none; font-weight:700;}
+  .error{
+    background:rgba(255,107,107,.1); border:1px solid rgba(255,107,107,.3); color:var(--danger);
+    border-radius:8px; padding:8px 12px; font-size:12px; margin-bottom:14px; display:none;
+  }
+  .divider{
+    display:flex; align-items:center; gap:10px; margin:18px 0; color:var(--muted); font-size:11px;
+    text-transform:uppercase; letter-spacing:.4px;
+  }
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--border);}
+  .btn-google{
+    width:100%; padding:10px; border-radius:8px; border:1px solid var(--border);
+    background:#1a1a24; color:var(--text); font-family:'Syne',sans-serif; font-weight:700;
+    font-size:13px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    gap:10px; transition:border-color .15s;
+  }
+  .btn-google:hover{border-color:var(--muted);}
+  .btn-google:disabled{opacity:.6;cursor:default;}
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">TeX<span>Studio</span> AI</div>
+    <div class="subtitle" id="mode-subtitle">Sign in to continue to your projects</div>
+
+    <div class="error" id="error-box"></div>
+
+    <form id="auth-form">
+      <div class="field" id="name-field" style="display:none;">
+        <label>Name</label>
+        <input type="text" id="name" placeholder="Your name" autocomplete="name">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="you@example.com" autocomplete="email" required>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••" autocomplete="current-password" required minlength="6">
+      </div>
+      <button class="btn" id="submit-btn" type="submit">Sign In</button>
+    </form>
+
+    <div class="divider">or</div>
+
+    <button class="btn-google" id="google-btn" type="button">
+      <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true">
+        <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+        <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+        <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+        <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="toggle">
+      <span id="toggle-text">Don't have an account?</span>
+      <a id="toggle-link" onclick="toggleMode()">Create one</a>
+    </div>
+  </div>
+
+<script type="module">
+import {
+  auth, googleProvider, onAuthStateChanged,
+  signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile,
+  signInWithPopup
+} from "/firebase-init.js";
+
+let isSignUp = false;
+
+onAuthStateChanged(auth, (user) => {
+  if (user) window.location.href = "/projects";
+});
+
+window.toggleMode = function () {
+  isSignUp = !isSignUp;
+  document.getElementById('name-field').style.display = isSignUp ? 'block' : 'none';
+  document.getElementById('submit-btn').textContent = isSignUp ? 'Create Account' : 'Sign In';
+  document.getElementById('mode-subtitle').textContent = isSignUp
+    ? 'Create an account to start writing'
+    : 'Sign in to continue to your projects';
+  document.getElementById('toggle-text').textContent = isSignUp
+    ? 'Already have an account?'
+    : "Don't have an account?";
+  document.getElementById('toggle-link').textContent = isSignUp ? 'Sign in' : 'Create one';
+  hideError();
+};
+
+function showError(msg) {
+  const box = document.getElementById('error-box');
+  box.textContent = msg;
+  box.style.display = 'block';
+}
+function hideError() {
+  document.getElementById('error-box').style.display = 'none';
+}
+
+document.getElementById('auth-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideError();
+  const email = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  const name = document.getElementById('name').value.trim();
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = isSignUp ? 'Creating account…' : 'Signing in…';
+
+  try {
+    if (isSignUp) {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      if (name) await updateProfile(cred.user, { displayName: name });
+    } else {
+      await signInWithEmailAndPassword(auth, email, password);
+    }
+    window.location.href = "/projects";
+  } catch (err) {
+    console.error('Auth error:', err.code, err.message);
+    showError(humanizeAuthError(err.code, err.message));
+    btn.disabled = false;
+    btn.textContent = isSignUp ? 'Create Account' : 'Sign In';
+  }
+});
+
+document.getElementById('google-btn').addEventListener('click', async () => {
+  hideError();
+  const btn = document.getElementById('google-btn');
+  btn.disabled = true;
+  try {
+    await signInWithPopup(auth, googleProvider);
+    window.location.href = "/projects";
+  } catch (err) {
+    console.error('Google auth error:', err.code, err.message);
+    if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+      showError(humanizeAuthError(err.code, err.message));
+    }
+    btn.disabled = false;
+  }
+});
+
+function humanizeAuthError(code, message) {
+  switch (code) {
+    case 'auth/email-already-in-use': return 'An account with this email already exists — try signing in.';
+    case 'auth/invalid-email': return 'Please enter a valid email address.';
+    case 'auth/weak-password': return 'Password must be at least 6 characters.';
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential': return 'Incorrect email or password.';
+    case 'auth/operation-not-allowed':
+      return 'Email/Password sign-in is not enabled for this Firebase project. Enable it in Firebase Console → Authentication → Sign-in method.';
+    case 'auth/network-request-failed': return 'Network error reaching Firebase. Check your connection.';
+    case 'auth/too-many-requests': return 'Too many attempts. Wait a moment and try again.';
+    case 'auth/popup-blocked': return 'Popup was blocked by the browser. Please allow popups and try again.';
+    case 'auth/account-exists-with-different-credential':
+      return 'An account already exists with this email using a different sign-in method.';
+    // Fall back to the raw Firebase message so the real cause is visible.
+    default: return (code || 'Error') + (message ? ': ' + message : '');
+  }
+}
+</script>
+</body>
+</html>
