@@ -1,0 +1,7 @@
+{
+  "name": "latexstudio-ai-frontend",
+  "private": true,
+  "scripts": {
+    "build": "node build.js"
+  }
+}

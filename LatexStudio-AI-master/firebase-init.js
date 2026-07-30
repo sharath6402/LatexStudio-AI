@@ -35,16 +35,18 @@ import {
     deleteObject
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-storage.js";
 
-// Fill in with your own Firebase project's config (Firebase Console -> Project
-// Settings -> General -> Your apps -> SDK setup and configuration).
+// Populated at Vercel build time by build.js from FIREBASE_* environment
+// variables (Project Settings -> Environment Variables) — never commit real
+// values here. For local dev, run `node build.js` with those vars exported,
+// or fill this in locally without committing the change.
 const firebaseConfig = {
-    apiKey: "AIzaSyDQXFp0A-QdpbGilcJnuiUw3Jmoy6nQ1sA",
-    authDomain: "latexeditorai.firebaseapp.com",
-    projectId: "latexeditorai",
-    storageBucket: "latexeditorai.firebasestorage.app",
-    messagingSenderId: "1011525388536",
-    appId: "1:1011525388536:web:10b375a26bc106d41f930d",
-    measurementId: "G-BW3YTHN9JP"
+    apiKey: "YOUR_FIREBASE_API_KEY",
+    authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID",
+    measurementId: "YOUR_MEASUREMENT_ID"
 };
 
 const app = initializeApp(firebaseConfig);
