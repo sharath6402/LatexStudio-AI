@@ -872,9 +872,11 @@ requireAuth().then((user) => {
 <script>
 
 // Base URL of the LaTeX Editor backend (LatexEditorBackEnd/LatexEditorBackend.py).
-// Point this at your own backend, e.g. "http://localhost:8000" for local dev,
-// or your own ngrok/hosted URL for a publicly reachable deployment.
-const API_BASE = "http://localhost:8000";
+// This is a Cloudflare quick tunnel to the backend running on cs3-1 — it's an
+// ephemeral URL that changes every time the tunnel process restarts on the
+// server. If /compile starts failing after a backend restart, get the new
+// URL from cloudflared's log there and update this constant.
+const API_BASE = "https://ended-hottest-bat-decimal.trycloudflare.com";
 
 
 
