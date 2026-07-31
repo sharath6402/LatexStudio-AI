@@ -244,7 +244,7 @@ PROJECTS_ROOT = os.environ.get("LATEX_PROJECTS_DIR", os.path.join(tempfile.gette
 os.makedirs(PROJECTS_ROOT, exist_ok=True)
 
 MANIFEST_NAME = ".compile_manifest.json"
-MAX_MISSING_PACKAGE_ATTEMPTS = 5
+MAX_MISSING_PACKAGE_ATTEMPTS = 10
 COMPILE_TIMEOUT_SECONDS = 120
 
 _MISSING_FILE_RE = re.compile(r"File `([^']+)' not found")
@@ -370,6 +370,74 @@ async def _tlmgr_install_for(missing_file: str) -> Optional[str]:
         return pkg if install.returncode == 0 else None
 
 
+_USEPACKAGE_RE = re.compile(r"\\(?:usepackage|RequirePackage)(?:\s*\[[^\]]*\])?\s*\{([^}]+)\}")
+_DOCUMENTCLASS_RE = re.compile(r"\\documentclass(?:\s*\[[^\]]*\])?\s*\{([^}]+)\}")
+
+
+def _strip_latex_comments(text: str) -> str:
+    """Crude but sufficient: drop everything from the first un-escaped '%' on
+    each line, so a commented-out \\usepackage isn't treated as a real one."""
+    out = []
+    for line in text.splitlines():
+        idx = None
+        for i, ch in enumerate(line):
+            if ch == "%" and (i == 0 or line[i - 1] != "\\"):
+                idx = i
+                break
+        out.append(line if idx is None else line[:idx])
+    return "\n".join(out)
+
+
+def _scan_required_names(files: dict[str, str]) -> tuple[set[str], set[str]]:
+    """Package/class names referenced via \\usepackage, \\RequirePackage and
+    \\documentclass across all .tex sources in the project."""
+    sty_names: set[str] = set()
+    cls_names: set[str] = set()
+    for filename, content in files.items():
+        if not filename.endswith(".tex"):
+            continue
+        text = _strip_latex_comments(content)
+        for match in _USEPACKAGE_RE.finditer(text):
+            sty_names.update(n.strip() for n in match.group(1).split(",") if n.strip())
+        for match in _DOCUMENTCLASS_RE.finditer(text):
+            cls_names.update(n.strip() for n in match.group(1).split(",") if n.strip())
+    return sty_names, cls_names
+
+
+async def _preinstall_missing_packages(files: dict[str, str]) -> str:
+    """pdflatex halts at the *first* missing package, so a document needing N
+    uninstalled packages would otherwise need N slow compile-fail-install-retry
+    round trips through latexmk. Instead, scan the source for every
+    \\usepackage/\\documentclass name upfront, check each with kpsewhich (fast,
+    local), and bulk-install whatever's actually missing via tlmgr before the
+    first real compile attempt. The latexmk retry loop still runs afterward as
+    a safety net for anything this regex-based scan misses (e.g. packages
+    loaded conditionally or via macros)."""
+    env = _compile_env()
+    sty_names, cls_names = _scan_required_names(files)
+    to_check = [f"{name}.sty" for name in sty_names] + [f"{name}.cls" for name in cls_names]
+
+    log = ""
+    for basename in to_check:
+        try:
+            found = await asyncio.to_thread(
+                subprocess.run,
+                ["kpsewhich", basename],
+                capture_output=True, text=True, env=env, timeout=10,
+            )
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            continue
+        if found.returncode == 0 and found.stdout.strip():
+            continue  # already available, nothing to do
+
+        pkg = await _tlmgr_install_for(basename)
+        if pkg:
+            log += f"\n[pre-install] installed '{pkg}' (provides '{basename}')\n"
+        else:
+            log += f"\n[pre-install] could not resolve a package for '{basename}' — will retry during compile if it's actually needed\n"
+    return log
+
+
 async def _run_latexmk(entry_dir: str, entry_base: str, force: bool = False) -> tuple[int, str]:
     """force=True passes -g: without it, latexmk sees that main.tex hasn't
     changed since a previous fatal-error run and just replays the cached
@@ -461,7 +529,7 @@ async def compile_latex(request: CompileRequest, background_tasks: BackgroundTas
             entry_dir = os.path.dirname(entry_path)
             entry_base = os.path.basename(entry)
 
-            compile_log = ""
+            compile_log = await _preinstall_missing_packages(request.files)
             returncode = 1
             attempted: set[str] = set()
 
