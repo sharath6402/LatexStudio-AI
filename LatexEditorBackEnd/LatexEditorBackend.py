@@ -530,17 +530,27 @@ async def compile_latex(request: CompileRequest, background_tasks: BackgroundTas
             entry_base = os.path.basename(entry)
 
             compile_log = await _preinstall_missing_packages(request.files)
-            # If pre-install actually installed something, this project's cached
-            # latexmk state may be a failure from a previous request (same
-            # unchanged main.tex, packages missing at the time). latexmk would
-            # otherwise see "no source changes" and replay that stale failure
-            # instead of retrying now that the real cause is fixed.
+
+            # latexmk decides whether a rerun is needed purely from source
+            # mtimes/content vs. its own cached state — it has no way to know
+            # that a package became available since the last run (whether via
+            # this request's pre-install, an out-of-band tlmgr install, or
+            # anything else). If main.tex is unchanged since a prior *failed*
+            # run of this project, latexmk just replays that cached failure
+            # ("Nothing to do... gave an error in previous invocation")
+            # instead of actually retrying. Detect that ground-truth condition
+            # directly — a .fdb_latexmk exists (latexmk has run before) but no
+            # main.pdf (that run didn't succeed) — and force a real rebuild.
+            pdf_file = os.path.join(entry_dir, os.path.splitext(entry_base)[0] + ".pdf")
+            fdb_file = os.path.join(entry_dir, os.path.splitext(entry_base)[0] + ".fdb_latexmk")
+            previous_run_failed = os.path.exists(fdb_file) and not os.path.exists(pdf_file)
             preinstalled_something = "[pre-install] installed" in compile_log
+
             returncode = 1
             attempted: set[str] = set()
 
             for attempt in range(MAX_MISSING_PACKAGE_ATTEMPTS + 1):
-                force = attempt > 0 or preinstalled_something
+                force = attempt > 0 or preinstalled_something or previous_run_failed
                 returncode, run_log = await _run_latexmk(entry_dir, entry_base, force=force)
                 compile_log += f"\n{'─' * 40} latexmk (attempt {attempt + 1}) {'─' * 40}\n{run_log}"
 
@@ -563,8 +573,6 @@ async def compile_latex(request: CompileRequest, background_tasks: BackgroundTas
 
                 if not resolved_any:
                     break
-
-            pdf_file = os.path.join(entry_dir, os.path.splitext(entry_base)[0] + ".pdf")
 
             if returncode != 0 or not os.path.exists(pdf_file):
                 return JSONResponse(
