@@ -530,11 +530,18 @@ async def compile_latex(request: CompileRequest, background_tasks: BackgroundTas
             entry_base = os.path.basename(entry)
 
             compile_log = await _preinstall_missing_packages(request.files)
+            # If pre-install actually installed something, this project's cached
+            # latexmk state may be a failure from a previous request (same
+            # unchanged main.tex, packages missing at the time). latexmk would
+            # otherwise see "no source changes" and replay that stale failure
+            # instead of retrying now that the real cause is fixed.
+            preinstalled_something = "[pre-install] installed" in compile_log
             returncode = 1
             attempted: set[str] = set()
 
             for attempt in range(MAX_MISSING_PACKAGE_ATTEMPTS + 1):
-                returncode, run_log = await _run_latexmk(entry_dir, entry_base, force=attempt > 0)
+                force = attempt > 0 or preinstalled_something
+                returncode, run_log = await _run_latexmk(entry_dir, entry_base, force=force)
                 compile_log += f"\n{'─' * 40} latexmk (attempt {attempt + 1}) {'─' * 40}\n{run_log}"
 
                 if returncode == 0:
